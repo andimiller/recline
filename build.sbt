@@ -1,3 +1,6 @@
+import xerial.sbt.Sonatype._
+import ReleaseTransformations._
+
 organization := "net.andimiller"
 
 name := "recline"
@@ -10,7 +13,31 @@ scalacOptions += "-Ypartial-unification"
 
 scalafmtConfig in ThisBuild := Some(file("scalafmt.conf"))
 
-lazy val macros = (project in file("macros")).settings(
+lazy val sharedSettings = Seq(
+  useGpg := true,
+  publishTo := sonatypePublishTo.value,
+  licenses := Seq("MIT" -> url("https://opensource.org/licenses/MIT")),
+  sonatypeProjectHosting := Some(GitHubHosting("andimiller", "whales", "andi at andimiller dot net")),
+  developers := List(Developer(id = "andimiller", name = "Andi Miller", email = "andi@andimiller.net", url = url("http://andimiller.net"))),
+  releaseCrossBuild := false,
+  releaseProcess := Seq[ReleaseStep](
+    checkSnapshotDependencies,
+    inquireVersions,
+    runClean,
+    releaseStepCommandAndRemaining("+test"),
+    setReleaseVersion,
+    commitReleaseVersion,
+    tagRelease,
+    releaseStepCommandAndRemaining("+publishSigned"),
+    setNextVersion,
+    commitNextVersion,
+    pushChanges
+  )
+)
+
+lazy val macros = (project in file("macros"))
+  .settings(sharedSettings)
+  .settings(
   name := "recline-macros",
   libraryDependencies ++= List(
     "com.monovore"   %% "decline"  % "0.6.2",
@@ -19,6 +46,7 @@ lazy val macros = (project in file("macros")).settings(
 )
 lazy val core = (project in file("core"))
   .dependsOn(macros)
+  .settings(sharedSettings)
   .settings(
     name := "recline",
     libraryDependencies ++= List(
@@ -28,6 +56,7 @@ lazy val core = (project in file("core"))
   )
 lazy val test = (project in file("test"))
   .dependsOn(core)
+  .settings(sharedSettings)
   .settings(
     name := "recline-test",
     skip in publish := true,
@@ -37,26 +66,3 @@ lazy val test = (project in file("test"))
   )
 
 // publishing/releasing settings
-import xerial.sbt.Sonatype._
-
-useGpg := true
-publishTo := sonatypePublishTo.value
-licenses := Seq("MIT" -> url("https://opensource.org/licenses/MIT"))
-sonatypeProjectHosting := Some(GitHubHosting("andimiller", "whales", "andi at andimiller dot net"))
-developers := List(Developer(id = "andimiller", name = "Andi Miller", email = "andi@andimiller.net", url = url("http://andimiller.net")))
-
-import ReleaseTransformations._
-releaseCrossBuild := false
-releaseProcess := Seq[ReleaseStep](
-  checkSnapshotDependencies,
-  inquireVersions,
-  runClean,
-  releaseStepCommandAndRemaining("+test"),
-  setReleaseVersion,
-  commitReleaseVersion,
-  tagRelease,
-  releaseStepCommandAndRemaining("+publishSigned"),
-  setNextVersion,
-  commitNextVersion,
-  pushChanges
-)
