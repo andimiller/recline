@@ -1,8 +1,6 @@
 import xerial.sbt.Sonatype._
 import ReleaseTransformations._
 
-skip in publish := true
-
 lazy val sharedSettings = Seq(
   organization := "net.andimiller",
   scalacOptions += "-Ypartial-unification",
@@ -29,6 +27,12 @@ lazy val sharedSettings = Seq(
     pushChanges
   )
 )
+
+lazy val root = (project in file("."))
+  .aggregate(macros, core, test)
+  .settings(
+    skip in publish := true
+  )
 
 lazy val macros = (project in file("macros"))
   .settings(
