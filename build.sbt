@@ -36,33 +36,33 @@ lazy val sharedSettings = Seq(
 )
 
 lazy val macros = (project in file("macros"))
-  .settings(sharedSettings)
   .settings(
-  name := "recline-macros",
-  libraryDependencies ++= List(
-    "com.monovore"   %% "decline"  % "0.6.2",
-    "com.propensive" %% "magnolia" % "0.10.0",
+    sharedSettings ++ List(
+      name := "recline-macros",
+      libraryDependencies ++= List(
+        "com.monovore"   %% "decline"  % "0.6.2",
+        "com.propensive" %% "magnolia" % "0.10.0",
+      )
+    )
   )
-)
 lazy val core = (project in file("core"))
   .dependsOn(macros)
-  .settings(sharedSettings)
   .settings(
-    name := "recline",
-    libraryDependencies ++= List(
-      "io.circe" %% "circe-generic" % "0.11.1",
-      "io.circe" %% "circe-yaml"    % "0.8.0"
-    )
-  )
+    sharedSettings ++
+      List(
+        name := "recline",
+        libraryDependencies ++= List(
+          "io.circe" %% "circe-generic" % "0.11.1",
+          "io.circe" %% "circe-yaml"    % "0.8.0"
+        )
+      ))
 lazy val test = (project in file("test"))
   .dependsOn(core)
-  .settings(sharedSettings)
   .settings(
-    name := "recline-test",
-    skip in publish := true,
-    libraryDependencies ++= List(
-      "org.scalatest" %% "scalatest" % "3.0.8" % "test"
-    )
-  )
-
-// publishing/releasing settings
+    sharedSettings ++ List(
+      name := "recline-test",
+      skip in publish := true,
+      libraryDependencies ++= List(
+        "org.scalatest" %% "scalatest" % "3.0.8" % "test"
+      )
+    ))
