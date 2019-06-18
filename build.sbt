@@ -1,19 +1,12 @@
 import xerial.sbt.Sonatype._
 import ReleaseTransformations._
 
-organization := "net.andimiller"
-
-name := "recline"
-
-version := "0.0.1"
-
-scalaVersion := "2.12.8"
-
-scalacOptions += "-Ypartial-unification"
-
-scalafmtConfig in ThisBuild := Some(file("scalafmt.conf"))
-
 lazy val sharedSettings = Seq(
+  organization := "net.andimiller",
+  scalacOptions += "-Ypartial-unification",
+  scalafmtConfig in ThisBuild := Some(file("scalafmt.conf")),
+  scalaVersion := "2.12.8",
+  // release settings
   useGpg := true,
   publishTo := sonatypePublishTo.value,
   licenses := Seq("MIT" -> url("https://opensource.org/licenses/MIT")),
