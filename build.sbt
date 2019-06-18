@@ -1,6 +1,8 @@
 import xerial.sbt.Sonatype._
 import ReleaseTransformations._
 
+skip in publish := true
+
 lazy val sharedSettings = Seq(
   organization := "net.andimiller",
   scalacOptions += "-Ypartial-unification",
