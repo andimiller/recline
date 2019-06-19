@@ -67,3 +67,31 @@ lazy val test = (project in file("test"))
         "org.scalatest" %% "scalatest" % "3.0.8" % "test"
       )
     ))
+
+lazy val docs = (project in file("docs"))
+  .dependsOn(core)
+  .enablePlugins(MicrositesPlugin)
+  .settings(
+    sharedSettings ++ List(
+      name := "recline-docs",
+      skip in publish := true,
+      // sbt-microsites settings
+      micrositeName := "recline",
+      micrositeDescription := "an opinionated configuration framework",
+      micrositeAuthor := "Andi Miller",
+      micrositeOrganizationHomepage := "http://andimiller.net",
+      micrositeGithubOwner := "andimiller",
+      micrositeGithubRepo := "recline",
+      micrositeCompilingDocsTool := WithMdoc,
+      mdocIn := sourceDirectory.value / "main" / "docs",
+      micrositePalette := Map(
+        "brand-primary"     -> "#A5BCFF",
+        "brand-secondary"   -> "#93B36B",
+        "brand-tertiary"    -> "#6276B3",
+        "gray-dark"         -> "#453E46",
+        "gray"              -> "#837F84",
+        "gray-light"        -> "#E3E2E3",
+        "gray-lighter"      -> "#F4F3F4",
+        "white-color"       -> "#FFFFFF")
+    )
+  )
