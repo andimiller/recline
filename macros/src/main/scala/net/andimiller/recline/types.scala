@@ -95,7 +95,7 @@ object types {
         ctx.parameters
           .map { p =>
             val kebab = p.annotations
-              .collect { case cli.autokebab => true }
+              .collect { case cli.autokebab() => true }
               .lastOption
               .getOrElse(false)
             val name = p.annotations
