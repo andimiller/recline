@@ -57,7 +57,7 @@ object types {
               .getOrElse("")
             val defaultText = p.default match {
               case Some(v) => s"default ${v.toString}"
-              case _ => ""
+              case _       => ""
             }
             val help = List(configuredHelp, defaultText).filterNot(_.isEmpty).mkString(", ")
             p.typeclass match {
@@ -70,7 +70,7 @@ object types {
                   )
                 p.default match {
                   case Some(v) => opts.orElse(Opts(v))
-                  case None => opts
+                  case None    => opts
                 }
             }
           }

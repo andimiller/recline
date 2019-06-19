@@ -31,7 +31,9 @@ lazy val sharedSettings = Seq(
 lazy val root = (project in file("."))
   .aggregate(macros, core, test)
   .settings(
-    skip in publish := true
+    sharedSettings ++ List(
+      skip in publish := true
+    )
   )
 
 lazy val macros = (project in file("macros"))
