@@ -51,18 +51,27 @@ object types {
               .collect { case cli.metavar(n) => n }
               .lastOption
               .getOrElse("")
-            val help = p.annotations
+            val configuredHelp = p.annotations
               .collect { case cli.help(h) => h }
               .lastOption
               .getOrElse("")
+            val defaultText = p.default match {
+              case Some(v) => s"default ${v.toString}"
+              case _ => ""
+            }
+            val help = List(configuredHelp, defaultText).filterNot(_.isEmpty).mkString(", ")
             p.typeclass match {
               case ROpts(o) => Folder.prefixNames(o)(name)
               case RArg(a) =>
-                Opts
+                val opts = Opts
                   .option(name, help, short, metavar)(a)
                   .orElse(
                     Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(a)
                   )
+                p.default match {
+                  case Some(v) => opts.orElse(Opts(v))
+                  case None => opts
+                }
             }
           }
           .toList

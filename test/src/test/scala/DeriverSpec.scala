@@ -101,6 +101,13 @@ class DeriverSpec extends WordSpec with MustMatchers {
           C(B(A("value")))
         ))
     }
+    "let you use defaults" in {
+      case class Cat(name: String, age: Int = 4)
+      deriveCli[Cat].command
+        .parse(List("--name", "martin")) must equal(
+        Right(Cat("martin", 4))
+      )
+    }
   }
 
   "SetterCliDeriver" should {
