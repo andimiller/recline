@@ -117,6 +117,17 @@ class DeriverSpec extends WordSpec with MustMatchers {
         )
       )
     }
+    "let you have multiple of one parameter, and define a separator for the env" in {
+      case class Cat(@cli.name("name") @cli.separator(' ') names: NonEmptyList[String])
+      deriveCli[Cat].command
+        .parse(List.empty, Map(
+          "NAME" -> "millie mildred"
+        )) must equal(
+        Right(
+          Cat(NonEmptyList.of("millie", "mildred"))
+        )
+      )
+    }
   }
 
   "SetterCliDeriver" should {
