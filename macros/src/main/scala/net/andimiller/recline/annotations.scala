@@ -9,5 +9,6 @@ object annotations {
     case class metavar(metavar: String) extends StaticAnnotation
     case class short(name: String)      extends StaticAnnotation
     case class autokebab()              extends StaticAnnotation
+    case class separator(sep: Char)     extends StaticAnnotation
   }
 }

@@ -1,5 +1,5 @@
+import cats.data.NonEmptyList
 import org.scalatest.{MustMatchers, WordSpec}
-
 import com.monovore.decline._
 import net.andimiller.recline.annotations._
 import net.andimiller.recline.generic._
@@ -108,6 +108,15 @@ class DeriverSpec extends WordSpec with MustMatchers {
         Right(Cat("martin", 4))
       )
     }
+    "let you have multiple of one parameter" in {
+      case class Cat(@cli.name("name") names: NonEmptyList[String])
+      deriveCli[Cat].command
+        .parse(List("--name", "bob", "--name", "martin")) must equal(
+        Right(
+          Cat(NonEmptyList.of("bob", "martin"))
+        )
+      )
+    }
   }
 
   "SetterCliDeriver" should {
@@ -165,6 +174,20 @@ class DeriverSpec extends WordSpec with MustMatchers {
         .map { f =>
           f(A("original"))
         } must equal(Right(A("v")))
+    }
+    "let you have multiple of a parameter" in {
+      case class Cat(@cli.name("name") names: NonEmptyList[String], age: Int)
+      deriveSetterCli[Cat].command
+        .parse(
+          List("--name", "bob", "--name", "martin")
+        )
+        .map { f =>
+          f(Cat(NonEmptyList.of("marge"), 4))
+        } must equal(
+        Right(
+          Cat(NonEmptyList.of("bob", "martin"), 4)
+        )
+      )
     }
 
   }

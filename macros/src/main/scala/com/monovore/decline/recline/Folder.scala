@@ -1,10 +1,8 @@
 package com.monovore.decline
 package recline
 
-import com.monovore.decline.Opts.Name
-
 object Folder {
-  def prefixNames(prefix: String)(names: List[Name]): List[Opts.Name] =
+  def prefixNames(prefix: String)(names: List[Opts.Name]): List[Opts.Name] =
     names.map {
       case Opts.ShortName(s) => Opts.ShortName(s)
       case Opts.LongName(n)  => Opts.LongName(prefix + "-" + n)

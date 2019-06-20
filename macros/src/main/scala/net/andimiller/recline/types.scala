@@ -1,5 +1,6 @@
 package net.andimiller.recline
 
+import cats.data._
 import cats.implicits._
 import com.monovore.decline.recline.Folder
 import com.monovore.decline.{Argument, Opts}
@@ -7,6 +8,7 @@ import magnolia._
 import net.andimiller.recline.annotations._
 
 import scala.language.experimental.macros
+import scala.reflect.ClassTag
 
 object types {
 
@@ -18,12 +20,18 @@ object types {
     override def getOpts: Option[Opts[T]] = Some(o)
   }
 
+  case class RArgs[T, O](a: Argument[T]) extends CliDeriver[O] {
+    override def getOpts: Option[Opts[O]] = None
+  }
+
   case class RArg[T](a: Argument[T]) extends CliDeriver[T] {
     override def getOpts: Option[Opts[T]] = None
   }
 
   object CliDeriver {
-    implicit def fromarg[T](implicit a: Argument[T]) = RArg(a)
+    implicit def fromArgMulti[T](implicit a: Argument[T]): CliDeriver[NonEmptyList[T]] = RArgs(a)
+    implicit def fromArgSingle[T: ClassTag](implicit a: Argument[T]): CliDeriver[T] =
+      if (implicitly[ClassTag[T]].runtimeClass == classOf[NonEmptyList[_]]) RArgs(a) else RArg(a)
 
     type Typeclass[T] = CliDeriver[T]
 
@@ -31,6 +39,10 @@ object types {
       ROpts(
         ctx.parameters
           .map { p =>
+            val sep = p.annotations
+              .collect { case cli.separator(c) => c }
+              .lastOption
+              .getOrElse(',')
             val kebab = p.annotations
               .collect { case cli.autokebab() => true }
               .lastOption
@@ -62,12 +74,26 @@ object types {
             val help = List(configuredHelp, defaultText).filterNot(_.isEmpty).mkString(", ")
             p.typeclass match {
               case ROpts(o) => Folder.prefixNames(o)(name)
+              case RArgs(a) =>
+                val opts =
+                  Opts
+                    .options(name, help, short, metavar)(a)
+                    .orElse(
+                      Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(
+                        Utils.multiEnv[p.PType](sep)(a.asInstanceOf[Argument[p.PType]])
+                      )
+                    )
+                p.default match {
+                  case Some(v) => opts.orElse(Opts(v))
+                  case None    => opts
+                }
               case RArg(a) =>
-                val opts = Opts
-                  .option(name, help, short, metavar)(a)
-                  .orElse(
-                    Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(a)
-                  )
+                val opts =
+                  Opts
+                    .option(name, help, short, metavar)(a)
+                    .orElse(
+                      Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(a)
+                    )
                 p.default match {
                   case Some(v) => opts.orElse(Opts(v))
                   case None    => opts
@@ -90,12 +116,17 @@ object types {
     override def getSetters: Option[Opts[T => T]] = Some(f)
   }
 
+  case class Args[T, O](a: Argument[T]) extends SetterCliDeriver[O] {
+    override def getSetters: Option[Opts[O => O]] = None
+  }
+
   case class Arg[T](a: Argument[T]) extends SetterCliDeriver[T] {
     override def getSetters: Option[Opts[T => T]] = None
   }
 
   object SetterCliDeriver {
-    implicit def fromarg[T](implicit a: Argument[T]) = Arg(a)
+    implicit def fromArgMulti[T](implicit a: Argument[T]): SetterCliDeriver[NonEmptyList[T]] = Args(a)
+    implicit def fromArgSingle[T](implicit a: Argument[T]): SetterCliDeriver[T]              = Arg(a)
 
     type Typeclass[T] = SetterCliDeriver[T]
 
@@ -103,6 +134,10 @@ object types {
       Setters(
         ctx.parameters
           .map { p =>
+            val sep = p.annotations
+              .collect { case cli.separator(c) => c }
+              .lastOption
+              .getOrElse(',')
             val kebab = p.annotations
               .collect { case cli.autokebab() => true }
               .lastOption
@@ -132,11 +167,13 @@ object types {
                 Folder
                   .prefixNames(o)(name)
                   .map(f => f.asInstanceOf[Any => Any])
-              case Arg(a) =>
+              case Args(a) =>
                 Opts
-                  .option(name, help, short, metavar)(a)
+                  .options(name, help, short, metavar)(a)
                   .orElse(
-                    Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(a)
+                    Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(
+                      Utils.multiEnv[p.PType](sep)(a.asInstanceOf[Argument[p.PType]])
+                    )
                   )
                   .orNone
                   .map { o =>
@@ -147,6 +184,21 @@ object types {
                       }
                     }.asInstanceOf[Any => Any]
                   }
+
+              case Arg(a) => {
+                Opts.option(name, help, short, metavar)(a)
+              }.orElse(
+                  Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(a)
+                )
+                .orNone
+                .map { o =>
+                  { p2: p.PType =>
+                    o match {
+                      case Some(v) => v
+                      case None    => p2
+                    }
+                  }.asInstanceOf[Any => Any]
+                }
             }
           }
           .toList
