@@ -251,5 +251,36 @@ class DeriverSpec extends WordSpec with MustMatchers {
     }
 
   }
+  "deriveMain" should {
+    "derive a main method that can parse a config" in {
+      import io.circe.generic.auto._
+      import net.andimiller.recline.generic._
+      case class Config(@cli.help("port to bind to") port: Int, name: String)
+
+      deriveMain[Config]("program", "my program").parse(List("--help")).leftMap(_.toString) must equal(
+        Left(
+          """Usage:
+              |    program [--port <integer>] [--name <string>] <config>
+              |    program [--port <integer>] [--name <string>]
+              |
+              |my program
+              |
+              |Options and flags:
+              |    --help
+              |        Display this help text.
+              |    --port <integer>
+              |        port to bind to
+              |    --name <string>
+              |
+              |
+              |Environment Variables:
+              |    PORT=<integer>
+              |        port to bind to
+              |    NAME=<string>
+              |    """.stripMargin
+        )
+      )
+    }
+  }
 
 }

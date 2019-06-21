@@ -53,8 +53,10 @@ lazy val core = (project in file("core"))
       List(
         name := "recline",
         libraryDependencies ++= List(
-          "io.circe" %% "circe-generic" % "0.11.1",
-          "io.circe" %% "circe-yaml"    % "0.8.0"
+          "io.circe"      %% "circe-generic" % "0.11.1",
+          "io.circe"      %% "circe-parser"  % "0.11.1",
+          "io.circe"      %% "circe-yaml"    % "0.8.0",
+          "org.typelevel" %% "cats-effect"   % "1.3.1"
         )
       ))
 lazy val test = (project in file("test"))
@@ -86,13 +88,14 @@ lazy val docs = (project in file("docs"))
       mdocIn := sourceDirectory.value / "main" / "docs",
       scalacOptions.in(Compile) ~= filterConsoleScalacOptions,
       micrositePalette := Map(
-        "brand-primary"     -> "#C9FDFF",
-        "brand-secondary"   -> "#657F80",
-        "brand-tertiary"    -> "#97BEBF",
-        "gray-dark"         -> "#453E46",
-        "gray"              -> "#837F84",
-        "gray-light"        -> "#E3E2E3",
-        "gray-lighter"      -> "#F4F3F4",
-        "white-color"       -> "#FFFFFF")
+        "brand-primary"   -> "#C9FDFF",
+        "brand-secondary" -> "#657F80",
+        "brand-tertiary"  -> "#97BEBF",
+        "gray-dark"       -> "#453E46",
+        "gray"            -> "#837F84",
+        "gray-light"      -> "#E3E2E3",
+        "gray-lighter"    -> "#F4F3F4",
+        "white-color"     -> "#FFFFFF"
+      )
     )
   )

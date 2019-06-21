@@ -7,9 +7,21 @@ import com.monovore.decline.{Argument, Opts}
 import magnolia._
 import net.andimiller.recline.annotations._
 
+import scala.annotation.implicitNotFound
 import scala.language.experimental.macros
 
 object types {
+
+  @implicitNotFound("Unable to find implicit Cli for ${T}, make sure you've got all of the Arguments in scope for it's members")
+  case class Cli[T](opts: Opts[T])
+  object Cli {
+    implicit def fromCliDeriver[T](implicit cli: CliDeriver[T]): Cli[T] = Cli(cli.getOpts.get)
+  }
+
+  case class SetterCli[T](opts: Opts[T => T])
+  object SetterCli {
+    implicit def fromSetterCliDeriver[T](implicit setterCli: SetterCliDeriver[T]): SetterCli[T] = SetterCli(setterCli.getSetters.get)
+  }
 
   sealed trait CliDeriver[T] {
     def getOpts: Option[Opts[T]]
@@ -124,7 +136,7 @@ object types {
     override def getSetters: Option[Opts[O => O]] = None
   }
 
-  case class Arg[T](a: Argument[T]) extends SetterCliDeriver[T] {
+  case class Arg[T](a: Argument[T], optional: Boolean = false) extends SetterCliDeriver[T] {
     override def getSetters: Option[Opts[T => T]] = None
   }
 
@@ -196,7 +208,7 @@ object types {
                     }.asInstanceOf[Any => Any]
                   }
 
-              case Arg(a) => {
+              case Arg(a, _) => {
                 Opts.option(name, help, short, metavar)(a)
               }.orElse(
                   Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(a)
