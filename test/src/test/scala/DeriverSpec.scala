@@ -108,7 +108,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
         Right(Cat("martin", 4))
       )
     }
-    "let you have multiple of one parameter" in {
+    "let you have 1 or more of one parameter" in {
       case class Cat(@cli.name("name") names: NonEmptyList[String])
       deriveCli[Cat].command
         .parse(List("--name", "bob", "--name", "martin")) must equal(
@@ -117,12 +117,22 @@ class DeriverSpec extends WordSpec with MustMatchers {
         )
       )
     }
+    "let you have multiple of one parameter" in {
+      case class Cat(@cli.name("name") names: List[String])
+      deriveCli[Cat].command
+        .parse(List("--name", "bob", "--name", "martin")) must equal(
+        Right(
+          Cat(List("bob", "martin"))
+        )
+      )
+    }
     "let you have multiple of one parameter, and define a separator for the env" in {
       case class Cat(@cli.name("name") @cli.separator(' ') names: NonEmptyList[String])
       deriveCli[Cat].command
-        .parse(List.empty, Map(
-          "NAME" -> "millie mildred"
-        )) must equal(
+        .parse(List.empty,
+               Map(
+                 "NAME" -> "millie mildred"
+               )) must equal(
         Right(
           Cat(NonEmptyList.of("millie", "mildred"))
         )
@@ -197,6 +207,45 @@ class DeriverSpec extends WordSpec with MustMatchers {
         } must equal(
         Right(
           Cat(NonEmptyList.of("bob", "martin"), 4)
+        )
+      )
+    }
+    "let you have 1 or more of one parameter" in {
+      case class Cat(@cli.name("name") names: NonEmptyList[String])
+      deriveSetterCli[Cat].command
+        .parse(List("--name", "bob", "--name", "martin"))
+        .map { f =>
+          f(Cat(NonEmptyList.one("blah")))
+        } must equal(
+        Right(
+          Cat(NonEmptyList.of("bob", "martin"))
+        )
+      )
+    }
+    "let you have multiple of one parameter" in {
+      case class Cat(@cli.name("name") names: List[String])
+      deriveSetterCli[Cat].command
+        .parse(List("--name", "bob", "--name", "martin"))
+        .map { f =>
+          f(Cat(List.empty))
+        } must equal(
+        Right(
+          Cat(List("bob", "martin"))
+        )
+      )
+    }
+    "let you have multiple of one parameter, and define a separator for the env" in {
+      case class Cat(@cli.name("name") @cli.separator(' ') names: NonEmptyList[String])
+      deriveSetterCli[Cat].command
+        .parse(List.empty,
+               Map(
+                 "NAME" -> "millie mildred"
+               ))
+        .map { f =>
+          f(Cat(NonEmptyList.one("marge")))
+        } must equal(
+        Right(
+          Cat(NonEmptyList.of("millie", "mildred"))
         )
       )
     }

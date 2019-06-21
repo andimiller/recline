@@ -8,7 +8,6 @@ import magnolia._
 import net.andimiller.recline.annotations._
 
 import scala.language.experimental.macros
-import scala.reflect.ClassTag
 
 object types {
 
@@ -20,7 +19,7 @@ object types {
     override def getOpts: Option[Opts[T]] = Some(o)
   }
 
-  case class RArgs[T, O](a: Argument[T]) extends CliDeriver[O] {
+  case class RArgs[T, O](a: Argument[T], optional: Boolean = false) extends CliDeriver[O] {
     override def getOpts: Option[Opts[O]] = None
   }
 
@@ -30,8 +29,8 @@ object types {
 
   object CliDeriver {
     implicit def fromArgMulti[T](implicit a: Argument[T]): CliDeriver[NonEmptyList[T]] = RArgs(a)
-    implicit def fromArgSingle[T: ClassTag](implicit a: Argument[T]): CliDeriver[T] =
-      if (implicitly[ClassTag[T]].runtimeClass == classOf[NonEmptyList[_]]) RArgs(a) else RArg(a)
+    implicit def fromArgMultiList[T](implicit a: Argument[T]): CliDeriver[List[T]]     = RArgs(a, true)
+    implicit def fromArgSingle[T](implicit a: Argument[T]): CliDeriver[T]              = RArg(a)
 
     type Typeclass[T] = CliDeriver[T]
 
@@ -74,15 +73,20 @@ object types {
             val help = List(configuredHelp, defaultText).filterNot(_.isEmpty).mkString(", ")
             p.typeclass match {
               case ROpts(o) => Folder.prefixNames(o)(name)
-              case RArgs(a) =>
-                val opts =
-                  Opts
-                    .options(name, help, short, metavar)(a)
-                    .orElse(
-                      Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(
-                        Utils.multiEnv[p.PType](sep)(a.asInstanceOf[Argument[p.PType]])
-                      )
-                    )
+              case RArgs(a, optional) =>
+                val cli =
+                  if (!optional)
+                    Opts.options(name, help, short, metavar)(a)
+                  else
+                    Opts.options(name, help, short, metavar)(a).orEmpty
+                val env =
+                  Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(
+                    if (!optional)
+                      Utils.multiEnv[p.PType](sep)(a.asInstanceOf[Argument[p.PType]])
+                    else
+                      Utils.multiEnvList[p.PType](sep)(a.asInstanceOf[Argument[p.PType]])
+                  )
+                val opts = cli.orElse(env)
                 p.default match {
                   case Some(v) => opts.orElse(Opts(v))
                   case None    => opts
@@ -116,7 +120,7 @@ object types {
     override def getSetters: Option[Opts[T => T]] = Some(f)
   }
 
-  case class Args[T, O](a: Argument[T]) extends SetterCliDeriver[O] {
+  case class Args[T, O](a: Argument[T], optional: Boolean = false) extends SetterCliDeriver[O] {
     override def getSetters: Option[Opts[O => O]] = None
   }
 
@@ -126,6 +130,7 @@ object types {
 
   object SetterCliDeriver {
     implicit def fromArgMulti[T](implicit a: Argument[T]): SetterCliDeriver[NonEmptyList[T]] = Args(a)
+    implicit def fromArgMultiList[T](implicit a: Argument[T]): SetterCliDeriver[List[T]]     = Args(a, true)
     implicit def fromArgSingle[T](implicit a: Argument[T]): SetterCliDeriver[T]              = Arg(a)
 
     type Typeclass[T] = SetterCliDeriver[T]
@@ -167,14 +172,20 @@ object types {
                 Folder
                   .prefixNames(o)(name)
                   .map(f => f.asInstanceOf[Any => Any])
-              case Args(a) =>
-                Opts
-                  .options(name, help, short, metavar)(a)
-                  .orElse(
-                    Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(
-                      Utils.multiEnv[p.PType](sep)(a.asInstanceOf[Argument[p.PType]])
-                    )
-                  )
+              case Args(a, optional) =>
+                val cli =
+                  if (!optional)
+                    Opts.options(name, help, short, metavar)(a)
+                  else
+                    Opts.options(name, help, short, metavar)(a).orEmpty
+                val env = Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(
+                  if (!optional)
+                    Utils.multiEnv[p.PType](sep)(a.asInstanceOf[Argument[p.PType]])
+                  else
+                    Utils.multiEnvList[p.PType](sep)(a.asInstanceOf[Argument[p.PType]])
+                )
+                cli
+                  .orElse(env)
                   .orNone
                   .map { o =>
                     { p2: p.PType =>
