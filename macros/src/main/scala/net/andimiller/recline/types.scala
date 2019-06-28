@@ -35,6 +35,10 @@ object types {
     override def getOpts: Option[Opts[O]] = None
   }
 
+  case class RArgOptional[T, O](a: Argument[T]) extends CliDeriver[O] {
+    override def getOpts: Option[Opts[O]] = None
+  }
+
   case class RArg[T](a: Argument[T]) extends CliDeriver[T] {
     override def getOpts: Option[Opts[T]] = None
   }
@@ -43,6 +47,7 @@ object types {
     implicit def fromArgMulti[T](implicit a: Argument[T]): CliDeriver[NonEmptyList[T]] = RArgs(a)
     implicit def fromArgMultiList[T](implicit a: Argument[T]): CliDeriver[List[T]]     = RArgs(a, true)
     implicit def fromArgSingle[T](implicit a: Argument[T]): CliDeriver[T]              = RArg(a)
+    implicit def fromArgOptional[T](implicit a: Argument[T]): CliDeriver[Option[T]]    = RArgOptional(a)
 
     type Typeclass[T] = CliDeriver[T]
 
@@ -114,6 +119,18 @@ object types {
                   case Some(v) => opts.orElse(Opts(v))
                   case None    => opts
                 }
+              case RArgOptional(a) =>
+                val opts =
+                  Opts
+                    .option(name, help, short, metavar)(a)
+                    .orElse(
+                      Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(a)
+                    )
+                    .orNone
+                p.default match {
+                  case Some(v) => opts.orElse(Opts(v))
+                  case None    => opts
+                }
             }
           }
           .toList
@@ -140,10 +157,15 @@ object types {
     override def getSetters: Option[Opts[T => T]] = None
   }
 
+  case class ArgOptional[T, O](a: Argument[T]) extends SetterCliDeriver[O] {
+    override def getSetters: Option[Opts[O => O]] = None
+  }
+
   object SetterCliDeriver {
     implicit def fromArgMulti[T](implicit a: Argument[T]): SetterCliDeriver[NonEmptyList[T]] = Args(a)
     implicit def fromArgMultiList[T](implicit a: Argument[T]): SetterCliDeriver[List[T]]     = Args(a, true)
     implicit def fromArgSingle[T](implicit a: Argument[T]): SetterCliDeriver[T]              = Arg(a)
+    implicit def fromArgOptional[T](implicit a: Argument[T]): SetterCliDeriver[Option[T]]    = ArgOptional(a)
 
     type Typeclass[T] = SetterCliDeriver[T]
 
@@ -219,6 +241,20 @@ object types {
                     o match {
                       case Some(v) => v
                       case None    => p2
+                    }
+                  }.asInstanceOf[Any => Any]
+                }
+              case ArgOptional(a) => {
+                Opts.option(name, help, short, metavar)(a)
+              }.orElse(
+                  Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(a)
+                )
+                .orNone
+                .map { o =>
+                  { p2: p.PType =>
+                    o match {
+                      case Some(v) => Some(v)
+                      case _       => p2
                     }
                   }.asInstanceOf[Any => Any]
                 }

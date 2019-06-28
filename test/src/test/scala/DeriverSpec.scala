@@ -138,6 +138,12 @@ class DeriverSpec extends WordSpec with MustMatchers {
         )
       )
     }
+    "accept optional things" in {
+      case class Cat(name: Option[String])
+      val c = deriveCli[Cat].command
+      c.parse(List.empty) must equal(Right(Cat(None)))
+      c.parse(List("--name", "bob")) must equal(Right(Cat(Some("bob"))))
+    }
   }
 
   "SetterCliDeriver" should {
@@ -248,6 +254,14 @@ class DeriverSpec extends WordSpec with MustMatchers {
           Cat(NonEmptyList.of("millie", "mildred"))
         )
       )
+    }
+    "accept optional things" in {
+      case class Cat(name: Option[String])
+      val c = deriveSetterCli[Cat].command
+      c.parse(List.empty).map(f => f(Cat(Some("bob")))) must equal(Right(Cat(Some("bob"))))
+      c.parse(List.empty).map(f => f(Cat(None))) must equal(Right(Cat(None)))
+      c.parse(List("--name", "bob")).map(f => f(Cat(Some("terry")))) must equal(Right(Cat(Some("bob"))))
+      c.parse(List("--name", "bob")).map(f => f(Cat(None))) must equal(Right(Cat(Some("bob"))))
     }
 
   }
