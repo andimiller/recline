@@ -88,9 +88,9 @@ lazy val docs = (project in file("docs"))
       mdocIn := sourceDirectory.value / "main" / "docs",
       scalacOptions.in(Compile) ~= filterConsoleScalacOptions,
       micrositePalette := Map(
-        "brand-primary"   -> "#C9FDFF",
-        "brand-secondary" -> "#657F80",
-        "brand-tertiary"  -> "#97BEBF",
+        "brand-primary"   -> "#FFB6AD",
+        "brand-secondary" -> "#805B57",
+        "brand-tertiary"  -> "#850E00",
         "gray-dark"       -> "#453E46",
         "gray"            -> "#837F84",
         "gray-light"      -> "#E3E2E3",
