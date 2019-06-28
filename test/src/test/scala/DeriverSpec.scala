@@ -262,6 +262,8 @@ class DeriverSpec extends WordSpec with MustMatchers {
       c.parse(List.empty).map(f => f(Cat(None))) must equal(Right(Cat(None)))
       c.parse(List("--name", "bob")).map(f => f(Cat(Some("terry")))) must equal(Right(Cat(Some("bob"))))
       c.parse(List("--name", "bob")).map(f => f(Cat(None))) must equal(Right(Cat(Some("bob"))))
+      c.parse(List("--name", "")).map(f => f(Cat(Some("terry")))) must equal(Right(Cat(None)))
+      c.parse(List("--name", "")).map(f => f(Cat(None))) must equal(Right(Cat(None)))
     }
 
   }

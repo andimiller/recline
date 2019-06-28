@@ -169,6 +169,14 @@ object types {
 
     type Typeclass[T] = SetterCliDeriver[T]
 
+    def makeEmptyStringNone[A](a: Argument[A]): Argument[Option[A]] = new Argument[Option[A]] {
+      override def read(string: String): ValidatedNel[String, Option[A]] =
+        if (string.trim.isEmpty)
+          Option.empty[A].validNel[String]
+        else a.read(string).map(_.some)
+      override def defaultMetavar: String = a.defaultMetavar
+    }
+
     def combine[T](ctx: CaseClass[SetterCliDeriver, T]): SetterCliDeriver[T] = {
       Setters(
         ctx.parameters
@@ -245,7 +253,7 @@ object types {
                   }.asInstanceOf[Any => Any]
                 }
               case ArgOptional(a) => {
-                Opts.option(name, help, short, metavar)(a)
+                Opts.option(name, help, short, metavar)(makeEmptyStringNone(a.asInstanceOf[Argument[Any]]))
               }.orElse(
                   Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(a)
                 )
@@ -253,7 +261,7 @@ object types {
                 .map { o =>
                   { p2: p.PType =>
                     o match {
-                      case Some(v) => Some(v)
+                      case Some(v) => v
                       case _       => p2
                     }
                   }.asInstanceOf[Any => Any]
