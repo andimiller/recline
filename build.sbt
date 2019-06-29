@@ -78,6 +78,10 @@ lazy val docs = (project in file("docs"))
       name := "recline-docs",
       skip in publish := true,
       // sbt-microsites settings
+      excludeFilter in ghpagesCleanSite :=
+        new FileFilter {
+          def accept(f: File) = (ghpagesRepository.value / "CNAME").getCanonicalPath == f.getCanonicalPath
+        },
       micrositeName := "recline",
       micrositeDescription := "an opinionated configuration framework",
       micrositeAuthor := "Andi Miller",
