@@ -1,0 +1,5 @@
+pipeline:
+  test:
+    image: scalaplatform/scala
+    commands:
+      - sbt test
