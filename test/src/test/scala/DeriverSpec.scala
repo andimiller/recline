@@ -144,6 +144,15 @@ class DeriverSpec extends WordSpec with MustMatchers {
       c.parse(List.empty) must equal(Right(Cat(None)))
       c.parse(List("--name", "bob")) must equal(Right(Cat(Some("bob"))))
     }
+    "derive CLIs for nested optional sections" in {
+      case class Owner(@cli.autokebab firstName: String, @cli.autokebab secondName: String)
+      case class Cat(name: String, owner: Option[Owner])
+      val c = deriveCli[Cat].command
+      c.parse(List("--name", "marge")) must equal(Right(Cat("marge", None)))
+      c.parse(List("--name", "marge", "--owner-first-name", "tom", "--owner-second-name", "smith")) must equal(
+        Right(Cat("marge", Some(Owner("tom", "smith"))))
+      )
+    }
   }
 
   "SetterCliDeriver" should {
@@ -265,7 +274,22 @@ class DeriverSpec extends WordSpec with MustMatchers {
       c.parse(List("--name", "")).map(f => f(Cat(Some("terry")))) must equal(Right(Cat(None)))
       c.parse(List("--name", "")).map(f => f(Cat(None))) must equal(Right(Cat(None)))
     }
-
+    "derive CLIs for nested optional sections" in {
+      case class Owner(@cli.autokebab firstName: String, @cli.autokebab secondName: String)
+      case class Cat(name: String, owner: Option[Owner])
+      val c = deriveSetterCli[Cat].command
+      c.parse(List("--name", "marge")).map(_(Cat("bob", None))) must equal(Right(Cat("marge", None)))
+      c.parse(List("--name", "marge")).map(_(Cat("bob", Some(Owner("a", "b"))))) must equal(Right(Cat("marge", Some(Owner("a", "b")))))
+      c.parse(List("--name", "marge", "--owner-first-name", "tom", "--owner-second-name", "smith")).map(_(Cat("bob", None))) must equal(
+        Right(Cat("marge", Some(Owner("tom", "smith"))))
+      )
+      c.parse(List("--name", "marge", "--owner-first-name", "tom")).map(_(Cat("bob", None))) must equal(
+        Right(Cat("marge", None))
+      )
+      c.parse(List("--name", "marge", "--owner-first-name", "tom")).map(_(Cat("bob", Some(Owner("tim", "smith"))))) must equal(
+        Right(Cat("marge", Some(Owner("tom", "smith"))))
+      )
+    }
   }
   "deriveMain" should {
     "derive a main method that can parse a config" in {

@@ -44,10 +44,11 @@ object types {
   }
 
   object CliDeriver {
-    implicit def fromArgMulti[T](implicit a: Argument[T]): CliDeriver[NonEmptyList[T]] = RArgs(a)
-    implicit def fromArgMultiList[T](implicit a: Argument[T]): CliDeriver[List[T]]     = RArgs(a, true)
-    implicit def fromArgSingle[T](implicit a: Argument[T]): CliDeriver[T]              = RArg(a)
-    implicit def fromArgOptional[T](implicit a: Argument[T]): CliDeriver[Option[T]]    = RArgOptional(a)
+    implicit def fromArgMulti[T](implicit a: Argument[T]): CliDeriver[NonEmptyList[T]]    = RArgs(a)
+    implicit def fromArgMultiList[T](implicit a: Argument[T]): CliDeriver[List[T]]        = RArgs(a, true)
+    implicit def fromArgSingle[T](implicit a: Argument[T]): CliDeriver[T]                 = RArg(a)
+    implicit def fromArgOptional[T](implicit a: Argument[T]): CliDeriver[Option[T]]       = RArgOptional(a)
+    implicit def fromCliOptional[T <: Product](implicit o: Cli[T]): CliDeriver[Option[T]] = ROpts(o.opts.orNone)
 
     type Typeclass[T] = CliDeriver[T]
 
@@ -137,7 +138,7 @@ object types {
           .sequence
           .map(ctx.rawConstruct))
 
-    implicit def gencli[T]: CliDeriver[T] = macro Magnolia.gen[T]
+    implicit def gencli[T <: Product]: CliDeriver[T] = macro Magnolia.gen[T]
 
   }
 
@@ -166,6 +167,26 @@ object types {
     implicit def fromArgMultiList[T](implicit a: Argument[T]): SetterCliDeriver[List[T]]     = Args(a, true)
     implicit def fromArgSingle[T](implicit a: Argument[T]): SetterCliDeriver[T]              = Arg(a)
     implicit def fromArgOptional[T](implicit a: Argument[T]): SetterCliDeriver[Option[T]]    = ArgOptional(a)
+
+    /**
+      * Note that this uses `Cli` as well as `SetterCli` because we want to let them set the whole `T`, or parts of the `T`
+      */
+    implicit def fromOptsOptional[T <: Product](implicit c: Cli[T], sc: SetterCli[T]): SetterCliDeriver[Option[T]] =
+      Setters(
+        // try and parse a complete T
+        c.opts.orNone
+          .map(t => { old: Option[T] =>
+            t.map(_.some).getOrElse(old)
+          })
+          // otherwise parse parts of it and override them
+          .orElse(sc.opts.orNone.map { of =>
+            { ot: Option[T] =>
+              ot.map(t =>
+                of.getOrElse({ a: T =>
+                  a
+                })(t))
+            }
+          }))
 
     type Typeclass[T] = SetterCliDeriver[T]
 
