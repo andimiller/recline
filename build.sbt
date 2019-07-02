@@ -90,7 +90,11 @@ lazy val docs = (project in file("docs"))
       micrositeGithubRepo := "recline",
       micrositeCompilingDocsTool := WithMdoc,
       mdocIn := sourceDirectory.value / "main" / "docs",
+      micrositeDocumentationUrl := "/getting-started.html",
       scalacOptions.in(Compile) ~= filterConsoleScalacOptions,
+      mdocVariables := Map(
+        "VERSION" -> version.value
+      ),
       micrositePalette := Map(
         "brand-primary"   -> "#FFB6AD",
         "brand-secondary" -> "#805B57",
