@@ -8,7 +8,7 @@ title: Getting Started
 You can depend on the project from maven central in SBT like so:
 
 ```scala
-libraryDependencies += "net.andimiller" %% "decline" % "@VERSION@"
+libraryDependencies += "net.andimiller" %% "recline" % "@VERSION@"
 ```
 
 For basic usage you should have these imports
