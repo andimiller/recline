@@ -153,6 +153,13 @@ class DeriverSpec extends WordSpec with MustMatchers {
         Right(Cat("marge", Some(Owner("tom", "smith"))))
       )
     }
+    "derive CLIs for configs with boolean values" in {
+      case class Config(foo: Boolean, bar: String)
+      val c = deriveCli[Config].command
+
+      c.parse(List("--foo", "--bar", "barvalue")) must equal(Right(Config(true, "barvalue")))
+      c.parse(List("--bar", "barvalue")) must equal(Right(Config(false, "barvalue")))
+    }
   }
 
   "SetterCliDeriver" should {

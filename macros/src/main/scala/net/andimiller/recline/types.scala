@@ -43,7 +43,12 @@ object types {
     override def getOpts: Option[Opts[T]] = None
   }
 
+  case class RFlag[T]() extends CliDeriver[T] /* actually boolean */ {
+    override def getOpts: Option[Opts[T]] = None
+  }
+
   object CliDeriver {
+    implicit val flag: CliDeriver[Boolean]                                                = RFlag[Boolean]()
     implicit def fromArgMulti[T](implicit a: Argument[T]): CliDeriver[NonEmptyList[T]]    = RArgs(a)
     implicit def fromArgMultiList[T](implicit a: Argument[T]): CliDeriver[List[T]]        = RArgs(a, true)
     implicit def fromArgSingle[T](implicit a: Argument[T]): CliDeriver[T]                 = RArg(a)
@@ -51,6 +56,16 @@ object types {
     implicit def fromCliOptional[T <: Product](implicit o: Cli[T]): CliDeriver[Option[T]] = ROpts(o.opts.orNone)
 
     type Typeclass[T] = CliDeriver[T]
+
+    val booleanEnvironmentArgument: Argument[Boolean] = new Argument[Boolean] {
+      override def read(string: String): ValidatedNel[String, Boolean] =
+        string.toLowerCase match {
+          case "yes" | "on" | "true" => true.validNel[String]
+          case "no" | "off" | "false" => false.validNel[String]
+          case _ => true.validNel[String]
+        }
+      override def defaultMetavar: String = ""
+    }
 
     def combine[T](ctx: CaseClass[CliDeriver, T]): CliDeriver[T] =
       ROpts(
@@ -91,6 +106,10 @@ object types {
             val help = List(configuredHelp, defaultText).filterNot(_.isEmpty).mkString(", ")
             p.typeclass match {
               case ROpts(o) => Folder.prefixNames(o)(name)
+              case RFlag() =>
+                val cli = Opts.flag(name, help, short).orFalse
+                val env = Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(booleanEnvironmentArgument)
+                cli orElse env
               case RArgs(a, optional) =>
                 val cli =
                   if (!optional)
@@ -162,11 +181,16 @@ object types {
     override def getSetters: Option[Opts[O => O]] = None
   }
 
+  case class FlagSetter[T]() extends SetterCliDeriver[T] /* actually boolean */ {
+    override def getSetters: Option[Opts[T => T]] = None
+  }
+
   object SetterCliDeriver {
     implicit def fromArgMulti[T](implicit a: Argument[T]): SetterCliDeriver[NonEmptyList[T]] = Args(a)
     implicit def fromArgMultiList[T](implicit a: Argument[T]): SetterCliDeriver[List[T]]     = Args(a, true)
     implicit def fromArgSingle[T](implicit a: Argument[T]): SetterCliDeriver[T]              = Arg(a)
     implicit def fromArgOptional[T](implicit a: Argument[T]): SetterCliDeriver[Option[T]]    = ArgOptional(a)
+    implicit val flagSetter: SetterCliDeriver[Boolean]                                       = FlagSetter[Boolean]()
 
     /**
       * Note that this uses `Cli` as well as `SetterCli` because we want to let them set the whole `T`, or parts of the `T`
@@ -235,6 +259,17 @@ object types {
                 Folder
                   .prefixNames(o)(name)
                   .map(f => f.asInstanceOf[Any => Any])
+              case FlagSetter() =>
+                val cli = Opts.flag(name, help, short).map(_ => true).orNone
+                val env = Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(CliDeriver.booleanEnvironmentArgument).orNone
+                cli.orElse(env).map { o =>
+                  { p2: p.PType =>
+                    o match {
+                      case Some(v) => v
+                      case _       => p2
+                    }
+                  }.asInstanceOf[Any => Any]
+                }
               case Args(a, optional) =>
                 val cli =
                   if (!optional)
