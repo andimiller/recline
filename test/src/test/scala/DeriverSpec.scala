@@ -160,6 +160,13 @@ class DeriverSpec extends WordSpec with MustMatchers {
       c.parse(List("--foo", "--bar", "barvalue")) must equal(Right(Config(true, "barvalue")))
       c.parse(List("--bar", "barvalue")) must equal(Right(Config(false, "barvalue")))
     }
+    "be able to kebab case nested object names" in {
+      case class NestedConfig(value: String)
+      case class Config(@cli.autokebab nestedConfig: NestedConfig)
+      val c = deriveCli[Config].command
+
+      c.parse(List("--nested-config-value", "foo")) must equal(Right(Config(NestedConfig("foo"))))
+    }
   }
 
   "SetterCliDeriver" should {
@@ -355,6 +362,14 @@ Subcommands:
         do a foo
     bar
         do a bar"""))
+    }
+    "be able to kebab case nested object names" in {
+      import io.circe.generic.auto._
+      case class NestedConfig(value: String)
+      case class Config(@cli.autokebab nestedConfig: NestedConfig)
+      val c = deriveMain[Config]("program", "description")
+
+      c.parse(List("--nested-config-value", "foo")) must equal(Right(Config(NestedConfig("foo"))))
     }
   }
 

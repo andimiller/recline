@@ -60,9 +60,9 @@ object types {
     val booleanEnvironmentArgument: Argument[Boolean] = new Argument[Boolean] {
       override def read(string: String): ValidatedNel[String, Boolean] =
         string.toLowerCase match {
-          case "yes" | "on" | "true" => true.validNel[String]
+          case "yes" | "on" | "true"  => true.validNel[String]
           case "no" | "off" | "false" => false.validNel[String]
-          case _ => true.validNel[String]
+          case _                      => true.validNel[String]
         }
       override def defaultMetavar: String = ""
     }
@@ -105,7 +105,8 @@ object types {
             }
             val help = List(configuredHelp, defaultText).filterNot(_.isEmpty).mkString(", ")
             p.typeclass match {
-              case ROpts(o) => Folder.prefixNames(o)(name)
+              case ROpts(o) =>
+                Folder.prefixNames(o)(name)
               case RFlag() =>
                 val cli = Opts.flag(name, help, short).orFalse
                 val env = Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(booleanEnvironmentArgument)
