@@ -321,6 +321,34 @@ class DeriverSpec extends WordSpec with MustMatchers {
         )
       )
     }
+    "be useful for deriving multiple commands" in {
+      import io.circe.generic.auto._
+      import net.andimiller.recline.generic._
+      case class FooConfig(i: Int)
+      case class BarConfig(s: String)
+
+      val fooCommand = deriveMain[FooConfig]("foo", "do a foo")
+      val barCommand = deriveMain[BarConfig]("bar", "do a bar")
+
+      val composed = Command("full program", "")(Opts.subcommand(fooCommand).orElse(Opts.subcommand(barCommand)))
+
+      composed.parse(List("--help")).leftMap(_.toString) must equal(Left(
+        """Usage:
+    full program foo
+    full program bar
+
+
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    foo
+        do a foo
+    bar
+        do a bar"""))
+    }
   }
 
 }
