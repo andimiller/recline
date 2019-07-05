@@ -2,7 +2,7 @@
 
 <p>You can depend on the project from maven central in SBT like so:</p>
 
-<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">libraryDependencies</span> <span class="o">+=</span> <span class="s">"net.andimiller"</span> <span class="o">%%</span> <span class="s">"recline"</span> <span class="o">%</span> <span class="s">"0.0.10-SNAPSHOT"</span>
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">libraryDependencies</span> <span class="o">+=</span> <span class="s">"net.andimiller"</span> <span class="o">%%</span> <span class="s">"recline"</span> <span class="o">%</span> <span class="s">"0.0.10"</span>
 </code></pre></div></div>
 
 <p>For basic usage you should have these imports</p>
@@ -19,7 +19,7 @@
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">case</span> <span class="k">class</span> <span class="nc">Configuration</span><span class="o">(</span><span class="n">port</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">hostname</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
 
 <span class="k">val</span> <span class="n">command</span> <span class="k">=</span> <span class="nc">Command</span><span class="o">(</span><span class="s">"server"</span><span class="o">,</span> <span class="s">""</span><span class="o">)(</span><span class="n">deriveCli</span><span class="o">[</span><span class="kt">Configuration</span><span class="o">])</span>
-<span class="c1">// command: Command[Configuration] = com.monovore.decline.Command@32dd4770
+<span class="c1">// command: Command[Configuration] = com.monovore.decline.Command@9e15f18
 </span>
 <span class="n">command</span><span class="o">.</span><span class="n">parse</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"--help"</span><span class="o">))</span>
 <span class="c1">// res0: Either[Help, Configuration] = Left(Usage: server [--port &lt;integer&gt;] [--hostname &lt;string&gt;]
@@ -55,7 +55,7 @@
 <span class="k">case</span> <span class="k">class</span> <span class="nc">Configuration</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">graphite</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">GraphiteConfig</span><span class="o">])</span>
 
 <span class="k">val</span> <span class="n">command</span> <span class="k">=</span> <span class="nc">Command</span><span class="o">(</span><span class="s">"server"</span><span class="o">,</span> <span class="s">""</span><span class="o">)(</span><span class="n">deriveCli</span><span class="o">[</span><span class="kt">Configuration</span><span class="o">])</span>
-<span class="c1">// command: Command[Configuration] = com.monovore.decline.Command@50afa257
+<span class="c1">// command: Command[Configuration] = com.monovore.decline.Command@f8faf40
 </span></code></pre></div></div>
 
 <p>This time it’s nested, so let’s see how the command line works</p>
@@ -120,7 +120,7 @@
 <span class="k">case</span> <span class="k">class</span> <span class="nc">Configuration</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">graphite</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">GraphiteConfig</span><span class="o">])</span>
 
 <span class="k">val</span> <span class="n">command</span> <span class="k">=</span> <span class="nc">Command</span><span class="o">(</span><span class="s">"server"</span><span class="o">,</span> <span class="s">""</span><span class="o">)(</span><span class="n">deriveCli</span><span class="o">[</span><span class="kt">Configuration</span><span class="o">])</span>
-<span class="c1">// command: Command[Configuration] = com.monovore.decline.Command@15f2b18f
+<span class="c1">// command: Command[Configuration] = com.monovore.decline.Command@4eef2c0d
 </span><span class="n">command</span><span class="o">.</span><span class="n">parse</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"--name"</span><span class="o">,</span> <span class="s">"myprogram"</span><span class="o">,</span> <span class="s">"--graphite-hostname"</span><span class="o">,</span> <span class="s">"localhost"</span><span class="o">))</span>
 <span class="c1">// res8: Either[Help, Configuration] = Right(Configuration(myprogram,Some(GraphiteConfig(localhost,2003))))
 </span></code></pre></div></div>
@@ -147,7 +147,7 @@
     <span class="nc">Try</span> <span class="o">{</span> <span class="nc">Instant</span><span class="o">.</span><span class="n">parse</span><span class="o">(</span><span class="n">string</span><span class="o">)</span> <span class="o">}.</span><span class="n">toEither</span><span class="o">.</span><span class="n">leftMap</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">getLocalizedMessage</span><span class="o">).</span><span class="n">toValidatedNel</span>
   <span class="k">override</span> <span class="k">def</span> <span class="n">defaultMetavar</span> <span class="k">=</span> <span class="s">"timestamp"</span>
 <span class="o">}</span>
-<span class="c1">// instantArgument: Argument[Instant] = repl.Session$App9$$anon$6@6f2259ed
+<span class="c1">// instantArgument: Argument[Instant] = repl.Session$App9$$anon$6@6287079e
 </span><span class="k">val</span> <span class="n">cli</span> <span class="k">=</span> <span class="n">deriveCli</span><span class="o">[</span><span class="kt">Configuration</span><span class="o">]</span>
 <span class="c1">// cli: Opts[Configuration] = Opts([--name &lt;string&gt;] [--timestamp &lt;timestamp&gt;])
 </span>
