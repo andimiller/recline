@@ -14,7 +14,7 @@
 <span class="k">val</span> <span class="n">config</span> <span class="k">=</span> <span class="nc">Configuration</span><span class="o">(</span><span class="s">"abc"</span><span class="o">,</span> <span class="mi">123</span><span class="o">)</span> <span class="c1">// imagine we parsed this from a config file
 // config: Configuration = Configuration(abc,123) // imagine we parsed this from a config file
 </span>
-<span class="k">val</span> <span class="n">setterCli</span> <span class="k">=</span> <span class="n">deriveSetterCli</span><span class="o">[</span><span class="kt">Configuration</span><span class="o">]</span>
+<span class="k">val</span> <span class="n">setterCli</span> <span class="k">=</span> <span class="n">deriveSetterOpts</span><span class="o">[</span><span class="kt">Configuration</span><span class="o">]</span>
 <span class="c1">// setterCli: Opts[Configuration =&gt; Configuration] = Opts([--name &lt;string&gt;] [--port &lt;integer&gt;])
 </span>
 <span class="nc">Command</span><span class="o">(</span><span class="s">"program"</span><span class="o">,</span> <span class="s">""</span><span class="o">)(</span><span class="n">setterCli</span><span class="o">).</span><span class="n">parse</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">"--name"</span><span class="o">,</span> <span class="s">"real name"</span><span class="o">)).</span><span class="n">map</span><span class="o">(</span><span class="n">f</span> <span class="k">=&gt;</span> <span class="n">f</span><span class="o">(</span><span class="n">config</span><span class="o">))</span>
