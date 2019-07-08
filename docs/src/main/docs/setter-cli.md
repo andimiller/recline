@@ -20,7 +20,7 @@ case class Configuration(name: String, port: Int)
 
 val config = Configuration("abc", 123) // imagine we parsed this from a config file
 
-val setterCli = deriveSetterCli[Configuration]
+val setterCli = deriveSetterOpts[Configuration]
 
 Command("program", "")(setterCli).parse(List("--name", "real name")).map(f => f(config))
 ```

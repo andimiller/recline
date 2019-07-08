@@ -13,14 +13,14 @@ class DeriverSpec extends WordSpec with MustMatchers {
   "CliDeriver" should {
     "derive complete CLIs" in {
       case class Cat(name: String, age: Int)
-      val cli = deriveCli[Cat]
+      val cli = deriveOpts[Cat]
       cli.command.parse(List("--name", "bob", "--age", "4")) must equal(Right(Cat("bob", 4)))
       cli.command.parse(List("--name", "bob")).isLeft must equal(true)
     }
     "derive nested CLIs" in {
       case class Cat(name: String, age: Int)
       case class Owner(full_name: String, cat: Cat)
-      deriveCli[Owner].command.parse(
+      deriveOpts[Owner].command.parse(
         List(
           "--full_name",
           "martin",
@@ -41,7 +41,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
           original_owner: Owner,
           original_owner_name: String
       )
-      val parser = deriveCli[Cat].command
+      val parser = deriveOpts[Cat].command
       parser.parse(List.empty)
     }
     "let you tag on extra information with annotations" in {
@@ -54,7 +54,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
           @cli.autokebab @cli.help("eg. lasagne") favouriteFood: String,
           @cli.autokebab originalOwner: Owner
       )
-      deriveCli[Cat].command
+      deriveOpts[Cat].command
         .parse(List("--help"))
         .leftMap(_.toString) must equal(
         Left(
@@ -90,7 +90,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
       case class A(inner: String)
       case class B(a: A)
       case class C(b: B)
-      val parser = deriveCli[C].command
+      val parser = deriveOpts[C].command
       parser.parse(
         List.empty,
         Map(
@@ -103,14 +103,14 @@ class DeriverSpec extends WordSpec with MustMatchers {
     }
     "let you use defaults" in {
       case class Cat(name: String, age: Int = 4)
-      deriveCli[Cat].command
+      deriveOpts[Cat].command
         .parse(List("--name", "martin")) must equal(
         Right(Cat("martin", 4))
       )
     }
     "let you have 1 or more of one parameter" in {
       case class Cat(@cli.name("name") names: NonEmptyList[String])
-      deriveCli[Cat].command
+      deriveOpts[Cat].command
         .parse(List("--name", "bob", "--name", "martin")) must equal(
         Right(
           Cat(NonEmptyList.of("bob", "martin"))
@@ -119,7 +119,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
     }
     "let you have multiple of one parameter" in {
       case class Cat(@cli.name("name") names: List[String])
-      deriveCli[Cat].command
+      deriveOpts[Cat].command
         .parse(List("--name", "bob", "--name", "martin")) must equal(
         Right(
           Cat(List("bob", "martin"))
@@ -128,7 +128,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
     }
     "let you have multiple of one parameter, and define a separator for the env" in {
       case class Cat(@cli.name("name") @cli.separator(' ') names: NonEmptyList[String])
-      deriveCli[Cat].command
+      deriveOpts[Cat].command
         .parse(List.empty,
                Map(
                  "NAME" -> "millie mildred"
@@ -140,14 +140,14 @@ class DeriverSpec extends WordSpec with MustMatchers {
     }
     "accept optional things" in {
       case class Cat(name: Option[String])
-      val c = deriveCli[Cat].command
+      val c = deriveOpts[Cat].command
       c.parse(List.empty) must equal(Right(Cat(None)))
       c.parse(List("--name", "bob")) must equal(Right(Cat(Some("bob"))))
     }
     "derive CLIs for nested optional sections" in {
       case class Owner(@cli.autokebab firstName: String, @cli.autokebab secondName: String)
       case class Cat(name: String, owner: Option[Owner])
-      val c = deriveCli[Cat].command
+      val c = deriveOpts[Cat].command
       c.parse(List("--name", "marge")) must equal(Right(Cat("marge", None)))
       c.parse(List("--name", "marge", "--owner-first-name", "tom", "--owner-second-name", "smith")) must equal(
         Right(Cat("marge", Some(Owner("tom", "smith"))))
@@ -155,7 +155,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
     }
     "derive CLIs for configs with boolean values" in {
       case class Config(foo: Boolean, bar: String)
-      val c = deriveCli[Config].command
+      val c = deriveOpts[Config].command
 
       c.parse(List("--foo", "--bar", "barvalue")) must equal(Right(Config(true, "barvalue")))
       c.parse(List("--bar", "barvalue")) must equal(Right(Config(false, "barvalue")))
@@ -163,16 +163,22 @@ class DeriverSpec extends WordSpec with MustMatchers {
     "be able to kebab case nested object names" in {
       case class NestedConfig(value: String)
       case class Config(@cli.autokebab nestedConfig: NestedConfig)
-      val c = deriveCli[Config].command
+      val c = deriveOpts[Config].command
 
       c.parse(List("--nested-config-value", "foo")) must equal(Right(Config(NestedConfig("foo"))))
+    }
+    "be able to take arguments" in {
+      case class Search(server: String, @cli.argument term: String)
+      val c = deriveOpts[Search].command
+
+      c.parse(List("--server", "foo", "my term")) must equal(Right(Search("foo", "my term")))
     }
   }
 
   "SetterCliDeriver" should {
     "derive CLIs which are setters" in {
       case class Cat(name: String, age: Int)
-      deriveSetterCli[Cat].command
+      deriveSetterOpts[Cat].command
         .parse(
           List(
             "--name",
@@ -186,7 +192,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
     }
     "derive CLIs which can be partial setters" in {
       case class Cat(name: String, age: Int)
-      deriveSetterCli[Cat].command
+      deriveSetterOpts[Cat].command
         .parse(
           List(
             "--name",
@@ -200,7 +206,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
       case class A(inner: String)
       case class B(a: A)
       case class C(b: B)
-      val parser = deriveSetterCli[C].command
+      val parser = deriveSetterOpts[C].command
       parser
         .parse(
           List(
@@ -213,7 +219,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
     }
     "derive CLIs which can override with environment variables" in {
       case class A(value: String)
-      val parser = deriveSetterCli[A].command
+      val parser = deriveSetterOpts[A].command
       parser
         .parse(
           List.empty,
@@ -227,7 +233,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
     }
     "let you have multiple of a parameter" in {
       case class Cat(@cli.name("name") names: NonEmptyList[String], age: Int)
-      deriveSetterCli[Cat].command
+      deriveSetterOpts[Cat].command
         .parse(
           List("--name", "bob", "--name", "martin")
         )
@@ -241,7 +247,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
     }
     "let you have 1 or more of one parameter" in {
       case class Cat(@cli.name("name") names: NonEmptyList[String])
-      deriveSetterCli[Cat].command
+      deriveSetterOpts[Cat].command
         .parse(List("--name", "bob", "--name", "martin"))
         .map { f =>
           f(Cat(NonEmptyList.one("blah")))
@@ -253,7 +259,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
     }
     "let you have multiple of one parameter" in {
       case class Cat(@cli.name("name") names: List[String])
-      deriveSetterCli[Cat].command
+      deriveSetterOpts[Cat].command
         .parse(List("--name", "bob", "--name", "martin"))
         .map { f =>
           f(Cat(List.empty))
@@ -265,7 +271,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
     }
     "let you have multiple of one parameter, and define a separator for the env" in {
       case class Cat(@cli.name("name") @cli.separator(' ') names: NonEmptyList[String])
-      deriveSetterCli[Cat].command
+      deriveSetterOpts[Cat].command
         .parse(List.empty,
                Map(
                  "NAME" -> "millie mildred"
@@ -280,7 +286,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
     }
     "accept optional things" in {
       case class Cat(name: Option[String])
-      val c = deriveSetterCli[Cat].command
+      val c = deriveSetterOpts[Cat].command
       c.parse(List.empty).map(f => f(Cat(Some("bob")))) must equal(Right(Cat(Some("bob"))))
       c.parse(List.empty).map(f => f(Cat(None))) must equal(Right(Cat(None)))
       c.parse(List("--name", "bob")).map(f => f(Cat(Some("terry")))) must equal(Right(Cat(Some("bob"))))
@@ -291,7 +297,7 @@ class DeriverSpec extends WordSpec with MustMatchers {
     "derive CLIs for nested optional sections" in {
       case class Owner(@cli.autokebab firstName: String, @cli.autokebab secondName: String)
       case class Cat(name: String, owner: Option[Owner])
-      val c = deriveSetterCli[Cat].command
+      val c = deriveSetterOpts[Cat].command
       c.parse(List("--name", "marge")).map(_(Cat("bob", None))) must equal(Right(Cat("marge", None)))
       c.parse(List("--name", "marge")).map(_(Cat("bob", Some(Owner("a", "b"))))) must equal(Right(Cat("marge", Some(Owner("a", "b")))))
       c.parse(List("--name", "marge", "--owner-first-name", "tom", "--owner-second-name", "smith")).map(_(Cat("bob", None))) must equal(
@@ -305,13 +311,13 @@ class DeriverSpec extends WordSpec with MustMatchers {
       )
     }
   }
-  "deriveMain" should {
+  "deriveCommand" should {
     "derive a main method that can parse a config" in {
       import io.circe.generic.auto._
       import net.andimiller.recline.generic._
       case class Config(@cli.help("port to bind to") port: Int, name: String)
 
-      deriveMain[Config]("program", "my program").parse(List("--help")).leftMap(_.toString) must equal(
+      deriveCommand[Config]("program", "my program").parse(List("--help")).leftMap(_.toString) must equal(
         Left(
           """Usage:
               |    program [--port <integer>] [--name <string>] <config>
@@ -341,8 +347,8 @@ class DeriverSpec extends WordSpec with MustMatchers {
       case class FooConfig(i: Int)
       case class BarConfig(s: String)
 
-      val fooCommand = deriveMain[FooConfig]("foo", "do a foo")
-      val barCommand = deriveMain[BarConfig]("bar", "do a bar")
+      val fooCommand = deriveCommand[FooConfig]("foo", "do a foo")
+      val barCommand = deriveCommand[BarConfig]("bar", "do a bar")
 
       val composed = Command("full program", "")(Opts.subcommand(fooCommand).orElse(Opts.subcommand(barCommand)))
 
@@ -367,7 +373,7 @@ Subcommands:
       import io.circe.generic.auto._
       case class NestedConfig(value: String)
       case class Config(@cli.autokebab nestedConfig: NestedConfig)
-      val c = deriveMain[Config]("program", "description")
+      val c = deriveCommand[Config]("program", "description")
 
       c.parse(List("--nested-config-value", "foo")) must equal(Right(Config(NestedConfig("foo"))))
     }

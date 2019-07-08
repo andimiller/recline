@@ -27,7 +27,7 @@ If you've already got a case class representing your configuration, you can just
 ```scala mdoc:to-string
 case class Configuration(port: Int, hostname: String)
 
-val command = Command("server", "")(deriveCli[Configuration])
+val command = Command("server", "")(deriveOpts[Configuration])
 
 command.parse(List("--help"))
 
@@ -51,7 +51,7 @@ import net.andimiller.recline.generic._
 case class GraphiteConfig(hostname: String, port: Int)
 case class Configuration(name: String, graphite: Option[GraphiteConfig])
 
-val command = Command("server", "")(deriveCli[Configuration])
+val command = Command("server", "")(deriveOpts[Configuration])
 ```
 
 This time it's nested, so let's see how the command line works
@@ -84,7 +84,7 @@ import net.andimiller.recline.generic._
 case class GraphiteConfig(hostname: String, port: Int = 2003)
 case class Configuration(name: String, graphite: Option[GraphiteConfig])
 
-val command = Command("server", "")(deriveCli[Configuration])
+val command = Command("server", "")(deriveOpts[Configuration])
 command.parse(List("--name", "myprogram", "--graphite-hostname", "localhost"))
 ```
 
@@ -101,7 +101,7 @@ case class Configuration(name: String, timestamp: Instant)
 ```
 
 ```scala mdoc:to-string:fail
-val cli = deriveCli[Configuration]
+val cli = deriveOpts[Configuration]
 ```
 
 So this means we're probably missing one of the types we need, let's try providing one:
@@ -114,7 +114,7 @@ implicit val instantArgument: Argument[Instant] = new Argument[Instant] {
     Try { Instant.parse(string) }.toEither.leftMap(_.getLocalizedMessage).toValidatedNel
   override def defaultMetavar = "timestamp"
 }
-val cli = deriveCli[Configuration]
+val cli = deriveOpts[Configuration]
 
 Command("my program", "")(cli).parse(List("--name", "foo", "--timestamp", "2019-07-02T12:23:58.006Z"))
 ```

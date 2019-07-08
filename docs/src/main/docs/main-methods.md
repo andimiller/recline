@@ -32,7 +32,7 @@ case class Configuration(
   adminPort: Int,
   graphite: Option[GraphiteConfig]
 )
-val main = deriveMain[Configuration]("my program", "an example program")
+val main = deriveCommand[Configuration]("my program", "an example program")
 
 main.parse(List("--help"))
 ```

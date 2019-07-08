@@ -79,6 +79,10 @@ object types {
               .collect { case cli.autokebab() => true }
               .lastOption
               .getOrElse(false)
+            val argument = p.annotations
+              .collect { case cli.argument() => true }
+              .lastOption
+              .getOrElse(false)
             val name = p.annotations
               .collect { case cli.name(n) => n }
               .lastOption
@@ -112,11 +116,12 @@ object types {
                 val env = Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(booleanEnvironmentArgument)
                 cli orElse env
               case RArgs(a, optional) =>
-                val cli =
-                  if (!optional)
-                    Opts.options(name, help, short, metavar)(a)
+                val parser =
+                  if (argument)
+                    Opts.arguments(metavar)(a)
                   else
-                    Opts.options(name, help, short, metavar)(a).orEmpty
+                    Opts.options(name, help, short, metavar)(a)
+                val cli = if (optional) parser.orEmpty else parser
                 val env =
                   Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(
                     if (!optional)
@@ -130,24 +135,28 @@ object types {
                   case None    => opts
                 }
               case RArg(a) =>
-                val opts =
-                  Opts
-                    .option(name, help, short, metavar)(a)
-                    .orElse(
-                      Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(a)
-                    )
+                val opts = {
+                  if (argument)
+                    Opts.argument(metavar)(a)
+                  else
+                    Opts.option(name, help, short, metavar)(a)
+                }.orElse(
+                  Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(a)
+                )
                 p.default match {
                   case Some(v) => opts.orElse(Opts(v))
                   case None    => opts
                 }
               case RArgOptional(a) =>
-                val opts =
-                  Opts
-                    .option(name, help, short, metavar)(a)
-                    .orElse(
-                      Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(a)
-                    )
-                    .orNone
+                val opts = {
+                  if (argument)
+                    Opts.argument(metavar)(a)
+                  else
+                    Opts.option(name, help, short, metavar)(a)
+                }.orElse(
+                    Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(a)
+                  )
+                  .orNone
                 p.default match {
                   case Some(v) => opts.orElse(Opts(v))
                   case None    => opts
@@ -235,6 +244,10 @@ object types {
               .collect { case cli.autokebab() => true }
               .lastOption
               .getOrElse(false)
+            val argument = p.annotations
+              .collect { case cli.argument() => true }
+              .lastOption
+              .getOrElse(false)
             val name = p.annotations
               .collect { case cli.name(n) => n }
               .lastOption
@@ -272,11 +285,15 @@ object types {
                   }.asInstanceOf[Any => Any]
                 }
               case Args(a, optional) =>
-                val cli =
-                  if (!optional)
-                    Opts.options(name, help, short, metavar)(a)
+                val parser =
+                  if (argument)
+                    Opts.arguments(metavar)(a)
                   else
-                    Opts.options(name, help, short, metavar)(a).orEmpty
+                    Opts.options(name, help, short, metavar)(a)
+                val cli =
+                  if (optional)
+                    parser.orEmpty
+                  else parser
                 val env = Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(
                   if (!optional)
                     Utils.multiEnv[p.PType](sep)(a.asInstanceOf[Argument[p.PType]])
@@ -296,7 +313,10 @@ object types {
                   }
 
               case Arg(a, _) => {
-                Opts.option(name, help, short, metavar)(a)
+                if (argument)
+                  Opts.argument(metavar)(a)
+                else
+                  Opts.option(name, help, short, metavar)(a)
               }.orElse(
                   Opts.env(name.toUpperCase.replace('-', '_'), help, metavar)(a)
                 )
