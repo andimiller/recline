@@ -41,7 +41,7 @@ lazy val macros = (project in file("macros"))
     sharedSettings ++ List(
       name := "recline-macros",
       libraryDependencies ++= List(
-        "com.monovore"   %% "decline"  % "0.6.2",
+        "com.monovore"   %% "decline"  % "1.0.0",
         "com.propensive" %% "magnolia" % "0.10.0",
       )
     )
@@ -53,10 +53,10 @@ lazy val core = (project in file("core"))
       List(
         name := "recline",
         libraryDependencies ++= List(
-          "io.circe"      %% "circe-generic" % "0.11.1",
-          "io.circe"      %% "circe-parser"  % "0.11.1",
-          "io.circe"      %% "circe-yaml"    % "0.8.0",
-          "org.typelevel" %% "cats-effect"   % "1.3.1"
+          "io.circe"      %% "circe-generic" % "0.12.0",
+          "io.circe"      %% "circe-parser"  % "0.12.0",
+          "io.circe"      %% "circe-yaml"    % "0.12.0",
+          "org.typelevel" %% "cats-effect"   % "2.0.0"
         )
       ))
 lazy val test = (project in file("test"))
